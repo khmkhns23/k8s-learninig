@@ -1,0 +1,66 @@
+# 1. PersistentVolume (พื้นที่จริง 100Mi บนเครื่อง k8s-worker1)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ws05-pv
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/ws05-data
+---
+# 2. PersistentVolumeClaim (คำร้องขอเบิกพื้นที่ 50Mi)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ws05-pvc
+  namespace: k8s-lab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 50Mi
+---
+# 3. Deployment ที่ Mount PVC เข้าไปใช้งานที่ /data
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ws05-app
+  namespace: k8s-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ws05-storage
+  template:
+    metadata:
+      labels:
+        app: ws05-storage
+    spec:
+      # ล็อกให้รันบน k8s-worker1 เพื่อให้ตรงกับ hostPath ของ PV
+      nodeSelector:
+        kubernetes.io/hostname: k8s-worker1
+      containers:
+        - name: busybox
+          image: busybox:1.36
+          command: ["sh", "-c", "sleep 3600"]
+          volumeMounts:
+            - name: persistent-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "20m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+      volumes:
+        - name: persistent-data
+          persistentVolumeClaim:
+            claimName: ws05-pvc

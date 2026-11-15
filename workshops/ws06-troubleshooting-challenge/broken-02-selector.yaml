@@ -1,0 +1,35 @@
+# เคสที่ 2: Pod ขึ้น Running 1/1 ปกติ แต่ทำไม curl http://192.168.1.11:30083 แล้ว Connection Refused / ไม่มี Endpoints?
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: case02-api
+  namespace: k8s-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: case02-backend
+  template:
+    metadata:
+      labels:
+        app: case02-backend
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: case02-svc
+  namespace: k8s-lab
+spec:
+  type: NodePort
+  selector:
+    app: case02-wrong-label
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30083

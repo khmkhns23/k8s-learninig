@@ -1,0 +1,21 @@
+# เคสที่ 1: ทำไม Pod ถึงไม่ยอม Running สักที?
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: case01-web
+  namespace: k8s-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: case01
+  template:
+    metadata:
+      labels:
+        app: case01
+    spec:
+      containers:
+        - name: web
+          image: nginxx:1.25-alpine
+          ports:
+            - containerPort: 80
